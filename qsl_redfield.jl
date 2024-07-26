@@ -140,5 +140,3 @@ final_integral4 = trapz(t_range, integral_results4)
 final_integral = (f_vals2 + g_vals2)*sqrt(n*(n+1)/2) + (f_vals1 + g_vals1)*sqrt(n*(n+3)/2)
 
 println("Double integral result: ", final_integral)
-
-

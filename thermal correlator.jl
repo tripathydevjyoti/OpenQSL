@@ -12,10 +12,12 @@ using KrylovKit
 using LinearAlgebra
 using Combinatorics
 using Arpack
-using Trapz
+using ProgressMeter
+using Printf
 
 
 
+np = pyimport("numpy")
 function thermal_corr(
     beta::T, H::Vector{BoseHubbard{S}}, time::T, partition::T;  kwargs=()
     ) where{S, T <:Real}
@@ -41,55 +43,36 @@ return corr_arr
 end
 
 
-function integrate_thermal_corr(beta, H, time_range)
-    
-    
-    integral_trsum1 = trapz(time_range, trsum1_vals)
-    #print("int1done")
-    integral_trsum2 = trapz(time_range, trsum2_vals)
-    
-    return integral_trsum1, integral_trsum2
-end
 
-
-J = 4.0
-U = 16.0
+J = 4.0           #hopping paramter (float values only)
+U = 8.0           #on-site potential (float values only)
 N=M=6             #no of sites and bosons in the chain
 beta = 1.0        #inverse temperature
 H = BoseHubbard.([N+1, N, N-1,N-2], M, J, U, :OBC) #BH hamiltonian 
 eigenvals, eigenvecs = eigen(Matrix(H[2].H))
-partition_function = part_func(1.0, H)  #partition function for the BH hamiltonian
+eigenvals
+partition_function = part_func(beta, H)  #partition function for the BH hamiltonian
+
+t_stop = 5.0
+num_points = 50
+times = np.linspace(0, t_stop, num_points) #range of time values 
 
 
-np = pyimport("numpy")
-time_range = np.linspace(0,0.9,100)
-trsum1_vals = Float64[]
-trsum2_vals = Float64[]
-
-    
-@showprogress for t in time_range
-        corr_arr = thermal_corr(beta, H, t,partition_function)
-        push!(trsum1_vals, np.real(corr_arr[1]))
-        push!(trsum2_vals, np.real(corr_arr[2]))
-        #print(t)
-end
-
-integral_trsum1, integral_trsum2 = integrate_thermal_corr(beta, H, time_range)
-
-
-n=1
-bound_sum = 0
-for j in 0:n-1
-    
-    bound_sum = bound_sum + (j+1)*(np.real((integral_trsum1) )+ np.real( (integral_trsum2)) )
-
-end
+twopt1 =[] #array to store values for Γ1
+twopt2 =[] #array to store values for Γ2
 
 
 
-times = np.linspace(0,0.1,20)
-plot(J*times, 4*J*J*bound_sum*times)
-np.save("qsl_lind_bound.npy",  4*J*J*bound_sum*times)
+@showprogress for (_, t) in enumerate(times)
+    arr = thermal_corr(beta, H, t, partition_function)
+    push!(twopt1, arr[1])
+    push!(twopt2, arr[2])
+end    
 
 
-
+filename1 = @sprintf("N_%d_L_%d_BH_beta_%.1f_U_%.1f_J_%.1f_t_%.1f_Gamma1.npy", N, M, beta, U, J, t_stop)
+filename2 = @sprintf("N_%d_L_%d_BH_beta_%.1f_U_%.1f_J_%.1f_t_%.1f_Gamma2.npy", N, M, beta, U, J, t_stop)
+np.save(filename1,twopt1)
+np.save(filename2,twopt2)
+ 
+ 
