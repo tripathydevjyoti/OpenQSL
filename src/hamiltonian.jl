@@ -1,11 +1,12 @@
 export
-    BoseHubbard
+    BoseHubbard,
+    RBoseHubbard
 
 """
 $(TYPEDSIGNATURES)
 """
 struct BoseHubbard{T <: Number}
-    basis::Union{Basis, NBasis, Vector{NBasis},NplusBasis}
+    basis::Union{Basis, NBasis, Vector{NBasis},RBasis}
     lattice::LabelledGraph
     H::SparseMatrixCSC{T, Int64}
 end
@@ -26,6 +27,8 @@ function BoseHubbard{T}(B, lattice::LabelledGraph, dummy::Int) where T <: Number
     end
     BoseHubbard{T}(B, lattice, H)
 end
+
+
 
 function BoseHubbard{T}(B, lattice::LabelledGraph) where T <: Number
     I, J, V = Int[], Int[], T[]
@@ -72,3 +75,24 @@ end
 
 
 Base.eltype(ham::BoseHubbard{T}) where {T} = T
+
+"""
+$(TYPEDSIGNATURES)
+"""
+
+
+struct RBoseHubbard{T <: Number}
+    basis::Union{Basis, NBasis, Vector{NBasis}, RBasis}
+    lattice::LabelledGraph
+    H::SparseMatrixCSC{T, Int64}
+end
+
+# Outer constructor to infer T automatically
+function RBoseHubbard(N::Int, M::Int, J::T, U::T) where T <: Number
+    RH =BlockDiagonal([BoseHubbard(i, M-1, J, U, :OBC).H for i in N:-1:0] ) # Vector of Hamiltonians
+    RB = RBasis(N, M)  # Basis initialization
+    lattice = chain(M, J, U, :OBC)  # Lattice initialization
+    return RBoseHubbard{T}(RB, lattice, RH)  # Return an instance of RBoseHubbard
+end
+
+Base.eltype(ham::RBoseHubbard{T}) where {T} = T

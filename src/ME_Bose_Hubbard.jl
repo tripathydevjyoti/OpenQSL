@@ -1,5 +1,5 @@
 
-module QSL_Bose_Hubbard
+module ME_Bose_Hubbard
     using LabelledGraphs
     using LightGraphs
     using MetaGraphs
@@ -8,9 +8,16 @@ module QSL_Bose_Hubbard
     using SparseArrays
     using Combinatorics
     using DocStringExtensions
-    using LinearAlgebra, MKL
+    using LinearAlgebra
     using DifferentialEquations
     using PyCall
+    using BlockDiagonals
+    using Test
+    using QuadGK
+    using Arpack
+    using SparseArrays
+    using ExponentialUtilities
+    using LogExpFunctions
     
 
 
@@ -22,7 +29,9 @@ module QSL_Bose_Hubbard
     include("conserved_operators.jl")
     include("hamiltonian.jl")
     include("bath.jl")
-   
+    include("dissipator.jl")
+    include("correlators.jl")
+    include("qsl.jl")
 
     
 

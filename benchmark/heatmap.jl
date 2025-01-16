@@ -1,4 +1,4 @@
-include("../src/QSL_Bose_Hubbard.jl")
+include("../src/ME_Bose_Hubbard.jl")
 using .ME_Bose_Hubbard
 
 using Test

@@ -1,9 +1,11 @@
 export
     Basis,
     NBasis,
-    NplusBasis,
     State,
     get_index,
+    RBasis,
+    tensor_basis,
+    limit_tensor_basis,
     dense
 
 abstract type AbstractBasis end
@@ -14,20 +16,18 @@ const IntOrVec = Union{Int, Vector{Int}}
 $(TYPEDSIGNATURES)
 """
 tag(v::Vector{T}) where T = hash(v)
+tag(v) = hash(v)
 
 """
 $(TYPEDSIGNATURES)
 """
 all_states(N::Int, M::Int) = vec(collect.(Iterators.product(fill(collect(0:N), M)...)))
 
-
 """
 $(TYPEDSIGNATURES)
 """
 all_sub_states(N::Int, M::Int) = collect(multiexponents(M, N))
 all_sub_states(N::Vector{Int}, M::Int) = vcat(all_sub_states.(N, M)...)
-
-
 
 """
 $(TYPEDSIGNATURES)
@@ -73,27 +73,72 @@ end
 $(TYPEDSIGNATURES)
 """
 
-struct NplusBasis{T, S} <: AbstractBasis
+struct RBasis{T, S} <: AbstractBasis
     N::Union{T, Vector{T}}
     M::T
     dim::T
     tags::Vector{S}
     eig_vecs::Vector{Vector{T}}
 
-    function NplusBasis(states::Vector, N::IntOrVec, M::Int)
+    function RBasis(states::Vector, N::IntOrVec, M::Int)
+        # Generate tags for each state but don't reorder
         tags = tag.(states)
-        order = sortperm(tags)
-        new{Int, eltype(tags)}(N, M, length(states), tags[order], states[order])
+        
+        # Keep the original order of states and tags
+        new{Int, eltype(tags)}(N, M, length(states), tags, states)
     end
-    NplusBasis(N::IntOrVec, M::Int) = NplusBasis(all_sub_states([N-1,N,N+1], M), N, M)
+
+    RBasis(N::IntOrVec, M::Int) = RBasis(vcat(vcat.([NBasis(i, M-1).eig_vecs for i in N:-1:0])...), N, M-1)
 end
-
-
-
 
 """
 $(TYPEDSIGNATURES)
 """
+
+struct tensor_basis{T, S} <: AbstractBasis
+    N::Union{T, Vector{T}}
+    M::T
+    dim::T
+    tags::Vector{S}
+    eig_vecs::Vector{Vector{T}}
+
+    function tensor_basis(states, N::IntOrVec, M::Int)
+        tags = tag.(states)
+
+        new{Int, eltype(tags)}(N, M, length(states), tags, states)
+    end
+    
+    function tensor_basis(N::Int, M::Int)
+        sys_basis = RBasis(N,2).eig_vecs
+        bath_basis = RBasis(N,M).eig_vecs
+        products  = collect.(Iterators.product(sys_basis,bath_basis))
+        #states = vec(transpose([vcat(p...) for p in products]))
+        states = vec(permutedims([vcat(p...) for p in products]))
+       
+
+        return tensor_basis(states, N, M)
+
+    end
+
+    
+end 
+
+"""
+$(TYPEDSIGNATURES)
+"""
+function limit_tensor_basis(N::Int, M::Int)
+    og_states = tensor_basis(N,M).eig_vecs
+    filtered_states = filter(state -> sum(state) == N, og_states)
+
+# Return a new tensor_basis instance with the filtered states
+    return tensor_basis(filtered_states, N, M)
+end
+
+"""
+$(TYPEDSIGNATURES)
+"""
+
+
 struct State{T}
     coeff::Vector{T}
     eig_vecs::Vector{Vector{Int}}
@@ -106,32 +151,18 @@ struct State{T}
         K = findall(!iszero, ket)
         State(ket[K], B.eig_vecs[K])
     end
-
-    function State(ket::Vector{T}, B::S, C::Vector{Any}) where {T <: Number, S <: AbstractBasis}
-        K = findall(!iszero, ket)
-        common_vecs = intersect(B.eig_vecs[K],C)
-        new_indices =[]
-        for i in 1:length(common_vecs)
-            for j in 1:length(C)
-
-                if common_vecs[i] == C[j]
-                    append!(new_indices,j)
-                end 
-            end       
-        end
-
-
-        State(ket[K], C[new_indices])
-    end
 end
-
 
 Base.eltype(state::State{T}) where {T} = T
 
 """
 $(TYPEDSIGNATURES)
 """
-@inline get_index(B::T, ket::Vector{Int}) where T <: AbstractBasis = searchsortedfirst(B.tags, tag(ket))
+@inline get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  = searchsortedfirst(B.tags, tag(ket))
+@inline get_index(B::RBasis, ket::Vector{Int64}) = findfirst(x ->x ==tag(ket), B.tags)
+
+
+
 
 """
 $(TYPEDSIGNATURES)
@@ -151,3 +182,7 @@ function dense(state::State, B::T) where T <: AbstractBasis
     dket
 end
 
+
+"""
+
+"""
