@@ -54,7 +54,7 @@ thermal_dm = thermal_state(beta,N, M, J, U)    #creates a block diagonal thermal
 """
 Step 3: Take the tensor product of the density matrix and thermal density matrix
 """
-result_dm = sparse(kron(D, thermal_dm)) 
+result_dm = sparse(kron(pure_system, thermal_dm)) 
 
 """
 Step 4: Limit the joint state to that of N bosons in total and apply the quench to set the intial state
@@ -117,6 +117,16 @@ spec_bound_list_born=[]
 
 end   
 
-plot(times, [exp.(-2*real(bound_list)),exp.(-2*real(bound_list_born)), exp.(-spec_bound_list) , exp.(-spec_bound_list_born),exp.(-renyi_ent_list)] )
-
+plot(
+    times, 
+    [exp.(-2 * real(bound_list)), 
+     exp.(-2 * real(bound_list_born)), 
+     exp.(-spec_bound_list), 
+     exp.(-spec_bound_list_born), 
+     exp.(-renyi_ent_list)], 
+    label=["State space" "State space + Born" "Liouv space" "Liouv space + Born" "OTOC"]
+)
+xlabel!("time")
+ylabel!("QSL")
+savefig("qsl_bh.pdf")
 
