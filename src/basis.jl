@@ -158,8 +158,16 @@ Base.eltype(state::State{T}) where {T} = T
 """
 $(TYPEDSIGNATURES)
 """
-@inline get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  = searchsortedfirst(B.tags, tag(ket))
+#@inline get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  = searchsortedfirst(B.tags, tag(ket))
 @inline get_index(B::RBasis, ket::Vector{Int64}) = findfirst(x ->x ==tag(ket), B.tags)
+
+@inline function get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  
+    idx = searchsortedfirst(B.tags, tag(ket))
+    if idx > length(B.tags) || B.tags[idx] != tag(ket)
+        error("The given ket does not exist in the basis set.")
+    end
+    return idx
+end
 
 
 

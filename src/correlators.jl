@@ -82,8 +82,8 @@ function partial_trace_bath(init_dm, N, M)
             if init_dm[i,j] != 0
                 if NBasis(N,M).eig_vecs[i][2:end] == NBasis(N,M).eig_vecs[j][2:end]
     
-                    index1 = NBasis(N,M).eig_vecs[i][1]+1
-                    index2 = NBasis(N,M).eig_vecs[j][1]+1
+                    index1 = N+1 - NBasis(N,M).eig_vecs[i][1]
+                    index2 = N+1 - NBasis(N,M).eig_vecs[j][1]
                     r_dm[index1, index2] = r_dm[index1, index2] + init_dm[i,j]
                 end    
  

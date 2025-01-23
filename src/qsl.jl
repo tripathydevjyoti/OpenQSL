@@ -72,7 +72,7 @@ end
 
 
 
-function time_evol_state(rho::SparseMatrixCSC{T, Int64}, bh::BoseHubbard{T}, time::T) where T<: Number
+function time_evol_state(rho::SparseMatrixCSC{ComplexF64, Int64}, bh::BoseHubbard{T}, time::T) where T<: Number
     τ = -1im*time
     U = exponential!(Matrix(τ*bh.H))
     U_dag = adjoint(U)
@@ -120,23 +120,34 @@ function time_evol_jump(time::T,op, ham::RBoseHubbard{T}) where T<:Real
 end  
 
 
-function limit_dm(rho::SparseMatrixCSC{T, Int64}, N::Int, M::Int) where T<:Number
+function limit_dm(rho::SparseMatrixCSC{T, Int64}, N::Int, M::Int) where {T<:Number}
     spinfo = findnz(rho)
 
-    dims = NBasis(N,M).dim
-    limit_rho = zeros(dims, dims)
-    for (i,val) in enumerate(findnz(rho)[3])
-        
-        index1 = get_index(NBasis(N,M), tensor_basis(N,M).eig_vecs[spinfo[1][i]])
-        index2 = get_index(NBasis(N,M), tensor_basis(N,M).eig_vecs[spinfo[2][i]])
-        
-        limit_rho[index1, index2] = val
-    end
-    
-    
-    return sparse(limit_rho)
-end  
+    dims = NBasis(N, M).dim
+    limit_rho = zeros(ComplexF64, dims, dims)
 
+    for (i, val) in enumerate(spinfo[3])
+        try
+            index1 = get_index(NBasis(N, M), tensor_basis(N, M).eig_vecs[spinfo[1][i]])
+            index2 = get_index(NBasis(N, M), tensor_basis(N, M).eig_vecs[spinfo[2][i]])
+
+            # Only update if indices are valid
+            limit_rho[index1, index2] = ComplexF64(val)
+
+        catch e
+            if isa(e, ErrorException)
+                # If index is not found, just skip this iteration
+                continue
+            else
+                rethrow(e)  # In case of unexpected errors, rethrow them
+            end
+        end
+    end
+
+    return sparse(limit_rho)
+end
+
+"""
 function create_annihilation_creation_descending(N::Int)
     # Initialize (N+1)x(N+1) matrices
     a = zeros(ComplexF64, N+1, N+1)  # Annihilation operator
@@ -150,6 +161,21 @@ function create_annihilation_creation_descending(N::Int)
 
     return a, adag
 end
+"""
+function create_annihilation_creation_descending(N::Int)
+    # Initialize (N+1)x(N+1) matrices
+    a = zeros(ComplexF64, N+1, N+1)    # Annihilation operator
+    adag = zeros(ComplexF64, N+1, N+1) # Creation operator
+
+    # Populate the matrices
+    for n in 1:N
+        a[n, n+1] = sqrt(n)         # a lowers |n⟩ to |n-1⟩ (a[2,3] = sqrt(3))
+        adag[n+1, n] = sqrt(n+1)     # a† raises |n⟩ to |n+1⟩ (adag[3,2] = sqrt(3))
+    end
+
+    return a, adag
+end
+
 
 function number_quench(N,M)
     size = NBasis(N,M).dim
