@@ -1,6 +1,7 @@
 # Quantum Speed Limit (QSL) for the Bose-Hubbard Model
 
-This repository contains Julia code to compute the Quantum Speed Limit (QSL) for the Bose-Hubbard model. The QSL is computed using out-of-time-ordered correlators (OTOCs) and Renyi entropy to analyze the scrambling behavior of bosonic systems.
+This repository contains Julia code to compute the Quantum Speed Limit (QSL) for the Bose-Hubbard model. The QSL is computed using out-of-time-ordered correlators (OTOCs) and Renyi entropy to analyze the scrambling behavior of bosonic systems. For detailed explanation of the source function [View the documentation](./github.pdf)
+
 
 ---
 
