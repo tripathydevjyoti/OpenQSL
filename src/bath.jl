@@ -57,12 +57,12 @@ function bath_exact(
 
     #therm_ket = expv(-beta, H[2], state)
     evol_bra = expv( s, H[2], state)
-    half_bra = dense(create( State(evol_bra, H[2].basis), j), H[1].basis)
+    half_bra = dense(create( State(evol_bra, H[2].basis), j, H), H[1].basis)
     
     
     ket = Matrix(rho)*dense(state, H[2].basis)
     evol_ket = expv(τ, H[2], State(ket, H[2].basis))
-    half_ket = expv(-(τ-s), H[1], create(State(evol_ket, H[2].basis),i))
+    half_ket = expv(-(τ-s), H[1], create(State(evol_ket, H[2].basis),i,H))
 
     
     
@@ -80,12 +80,12 @@ function bath2(
 #therm_ket = expv(-beta, H[2], state)
     evol_bra = expv( s, H[2], state)
     print(evol_bra)
-    half_bra = dense(destroy( State(evol_bra, H[2].basis), j), H[3].basis)
+    half_bra = dense(destroy( State(evol_bra, H[2].basis), j, H), H[3].basis)
 
 
     
     evol_ket = expv(τ, H[2], state)
-    half_ket = expv(-(τ-s), H[3], destroy(State(evol_ket, H[2].basis),i))
+    half_ket = expv(-(τ-s), H[3], destroy(State(evol_ket, H[2].basis),i, H))
 
 
 
@@ -101,12 +101,12 @@ function bath2_exact(
 
 #therm_ket = expv(-beta, H[2], state)
     evol_bra = expv( s, H[2], state)
-    half_bra = dense(destroy( State(evol_bra, H[2].basis), j), H[2].basis)
+    half_bra = dense(destroy( State(evol_bra, H[2].basis), j, H), H[2].basis)
 
 
     ket = Matrix(rho)*dense(state, H[2].basis)
     evol_ket = expv(τ, H[2], State(ket, H[2].basis))
-    half_ket = expv(-(τ-s), H[2], destroy(State(evol_ket, H[2].basis),i))
+    half_ket = expv(-(τ-s), H[2], destroy(State(evol_ket, H[2].basis),i, H))
 
 
 

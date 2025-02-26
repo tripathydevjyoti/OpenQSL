@@ -25,9 +25,9 @@ module ME_Bose_Hubbard
 
     include("basis.jl")
     include("lattice.jl")
+    include("hamiltonian.jl")
     include("create_destroy.jl")
     include("conserved_operators.jl")
-    include("hamiltonian.jl")
     include("bath.jl")
     include("dissipator.jl")
     include("correlators.jl")

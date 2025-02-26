@@ -158,9 +158,10 @@ Base.eltype(state::State{T}) where {T} = T
 """
 $(TYPEDSIGNATURES)
 """
-#@inline get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  = searchsortedfirst(B.tags, tag(ket))
+@inline get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  = searchsortedfirst(B.tags, tag(ket))
 @inline get_index(B::RBasis, ket::Vector{Int64}) = findfirst(x ->x ==tag(ket), B.tags)
 
+"""
 @inline function get_index(B::Union{NBasis, Basis}, ket::Vector{Int})  
     idx = searchsortedfirst(B.tags, tag(ket))
     if idx > length(B.tags) || B.tags[idx] != tag(ket)
@@ -168,7 +169,7 @@ $(TYPEDSIGNATURES)
     end
     return idx
 end
-
+"""
 
 
 
@@ -189,6 +190,7 @@ function dense(state::State, B::T) where T <: AbstractBasis
     end
     dket
 end
+
 
 
 """
