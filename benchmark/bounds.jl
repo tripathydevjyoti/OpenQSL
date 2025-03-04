@@ -25,7 +25,7 @@ Set Parameters
 N = 3 # number of sites in the chain  (int values only)                                      
 M = 3  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
-U = 8.0 # on-site potential (float values only) 
+U = 6.0 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
 beta = 1.0  # inverse temperature
 
