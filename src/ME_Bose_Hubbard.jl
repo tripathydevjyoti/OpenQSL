@@ -18,6 +18,8 @@ module ME_Bose_Hubbard
     using SparseArrays
     using ExponentialUtilities
     using LogExpFunctions
+    using HCubature
+    using Interpolations
     
 
 
@@ -32,6 +34,8 @@ module ME_Bose_Hubbard
     include("dissipator.jl")
     include("correlators.jl")
     include("qsl.jl")
+    include("qsl_rect_int.jl")
+
 
     
 

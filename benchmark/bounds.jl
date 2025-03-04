@@ -26,10 +26,10 @@ Set Parameters
 
 """
 
-N = 6 #number of sites in the chain  (int values only)                                      
-M = 6  #number of bosons in the chain (int values only)
+N = 3 #number of sites in the chain  (int values only)                                      
+M = 3  #number of bosons in the chain (int values only)
 J = 4.0 #hopping paramter (float values only)
-U =  9.0# on-site potential (float values only) 
+U =  8.0# on-site potential (float values only) 
 T =eltype(J)  #set data-type for the rest of the code
 beta = 1.0  #inverse temperature
 
@@ -108,7 +108,7 @@ bath_ham[2].basis.eig_vecs
    
 
     #qsl = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
-    qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+    qsl_born = QSL_OTOC_pre(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
 
     #push!(bound_list, real(qsl.state_bound))
     #push!(spec_bound_list, real(qsl.spectral_bound))
@@ -164,4 +164,53 @@ CSV.write("thermal_corr.csv", df)
 
 println("Saved thermal_corr data to thermal_corr.csv")
 
-# Define the exponential decay function
+
+
+"""
+J_values = 0.0:0.5:12.0  
+length(J_values)         # example range of J
+integrated_diffs = Float64[]      # array to store integrated differences
+
+@showprogress for J_val in J_values
+    renyi_ent_list_J =[]
+    spec_bound_list_born_J=[]
+    @showprogress for (i,t) in enumerate(times)
+        rho_t = time_evol_state(init_state, H, t )
+        rho_int_t = interaction_picture(NBasis(N,M), U, rho_t)
+        
+        rho_S = partial_trace_bath(rho_int_t, N, M)
+        push!(renyi_ent_list_J, renyi_entropy(rho_S))
+    
+        #rho_B = partial_trace_system(rho_int_t, size(init_state,1),N,M)
+    
+       
+    
+        #qsl = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
+        qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+    
+        #push!(bound_list, real(qsl.state_bound))
+        #push!(spec_bound_list, real(qsl.spectral_bound))
+        #push!(bound_list_born, real(qsl_born.state_bound))
+        push!(spec_bound_list_born_J, real(qsl_born.spectral_bound))
+        
+    
+    end   
+    otoc_vals = exp.(-renyi_ent_list_J)       # computed for this J_val
+    liouv_vals = exp.(-spec_bound_list_born_J) # computed for this J_val
+    diff_vals = otoc_vals .- liouv_vals
+    diff_filtered = map(x -> x > 0 ? 0.0 : x, diff_vals)
+    dt = times[2] - times[1]
+    integrated = sum(diff_filtered) * dt
+    push!(integrated_diffs, integrated)
+end
+
+# Finally, plot the integrated deviation versus J:
+using Plots
+plot(J_values, integrated_diffs,
+     marker = :circle,
+     xlabel = "J",
+     ylabel = "Integrated Negative Deviation",
+     label = "Integrated (OTOC - Liouv) where negative")
+
+
+"""
