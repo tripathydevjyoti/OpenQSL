@@ -18,14 +18,15 @@ using SparseArrays
 using BlockDiagonals
 using ExponentialUtilities
 using LogExpFunctions
+using Trapz
 
 """
 Set Parameters
 """
-N = 3 # number of sites in the chain  (int values only)                                      
-M = 3  # number of bosons in the chain (int values only)
+N = 4 # number of sites in the chain  (int values only)                                      
+M = 4  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
-U = 6.0 # on-site potential (float values only) 
+U = 10.0 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
 beta = 1.0  # inverse temperature
 
@@ -142,7 +143,7 @@ dt_cn = 0.001
     push!(renyi_ent_list, renyi_entropy(rho_S))
 
     # Compute the QSL bound using the pre-Born approximation version
-    qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+    qsl_born = QSL_OTOC_trapz(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
 
     push!(bound_list_born, real(qsl_born.state_bound))
     push!(spec_bound_list_born, real(qsl_born.spectral_bound))

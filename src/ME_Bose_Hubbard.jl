@@ -20,7 +20,7 @@ module ME_Bose_Hubbard
     using LogExpFunctions
     using HCubature
     using Interpolations
-    
+    using Trapz
 
 
     
