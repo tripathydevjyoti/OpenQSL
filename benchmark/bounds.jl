@@ -26,7 +26,7 @@ Set Parameters
 N = 4 # number of sites in the chain  (int values only)                                      
 M = 4  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
-U = 10.0 # on-site potential (float values only) 
+U = 20.0 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
 beta = 1.0  # inverse temperature
 
@@ -144,11 +144,18 @@ dt_cn = 0.001
 
     # Compute the QSL bound using the pre-Born approximation version
     qsl_born = QSL_OTOC_trapz(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
-
+    #qsl = QSL_OTOC_trapz(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
     push!(bound_list_born, real(qsl_born.state_bound))
     push!(spec_bound_list_born, real(qsl_born.spectral_bound))
+
+    #push!(bound_list, real(qsl.state_bound))
+    #push!(spec_bound_list, real(qsl.spectral_bound))
 end
 
+using  NPZ
+NPZ.save("renyi_ent_list.npy", renyi_ent_list)
+NPZ.save("bound_list_born.npy", bound_list_born)
+NPZ.save("spec_bound_list_born.npy", spec_bound_list_born)
 # Plot results
 plot(
     times, 
@@ -167,13 +174,18 @@ plot(
     [exp.(-2 * real(bound_list_born)), 
      exp.(-spec_bound_list_born), 
      exp.(-renyi_ent_list)], 
-    label = ["State space + Born" "Liouv space + Born" "OTOC"]
+    label = ["State space + Thermal bath" "Liouv space + Thermal bath" "OTOC"],
+    lw = 2  # Increase line thickness
 )
 xlabel!("time")
 ylabel!("QSL")
-savefig("qsl_bh_N$(N)_J$(J)_U$(U).pdf")
+title!("Scrambling in TFIM (Crank-Nicolson)")
+savefig("qsl_bh_N$(N)_J$(J)_U$(U)_highres.pdf")
 
-
+np = pyimport("numpy")
+np.save("renyi_ent_list.npy", renyi_ent_list)
+np.save("bound_list_born.npy", bound_list_born)
+np.save("spec_bound_list_born.npy", spec_bound_list_born)
 
 """
 thermal_corr =[]
