@@ -1,5 +1,25 @@
-using Plots
 
+include("../src/ME_Bose_Hubbard.jl")
+using .ME_Bose_Hubbard
+
+using Test
+using LightGraphs
+using LabelledGraphs
+using QuadGK
+using Plots
+using PyCall
+using DifferentialEquations
+using KrylovKit
+using LinearAlgebra
+using Combinatorics
+using Arpack
+using ProgressMeter
+using Printf
+using SparseArrays
+using BlockDiagonals
+using ExponentialUtilities
+using LogExpFunctions
+using Trapz
 # ---------------------------
 # Define parameters and U/J range
 # ---------------------------
@@ -15,20 +35,60 @@ times = np.linspace(0, t_stop, num_points)
 pure_system = zeros(ComplexF64, N+1, N+1)
 pure_system[N, N] = 1.0
 
+"""
+    crank_nicolson_propagator(H::BoseHubbard{T}, dt::Real) where T<:Real
+
+Compute the one–step Crank–Nicolson propagator for the Bose–Hubbard Hamiltonian.
+Here H is of type BoseHubbard and H.H extracts its matrix.
+Uses LU decomposition to solve
+    (I + i*(dt/2)*H) * U = (I - i*(dt/2)*H)
+"""
+function crank_nicolson_propagator(H::BoseHubbard{T}, dt::Real) where T<:Real
+    ham = H.H
+    I_mat = Matrix{eltype(ham)}(I, size(ham, 1), size(ham, 1))
+    A = I_mat - im*(dt/2)*ham
+    B = I_mat + im*(dt/2)*ham
+    # Use LU decomposition for solving B * U = A
+    LU = lu(B)
+    U = LU \ A
+    return U
+end
+
+"""
+    time_evol_state_cn(rho, H, t_total, dt_cn)
+
+Evolves the state (or density matrix) `rho` under Hamiltonian `H` using the Crank–Nicolson 
+method for a total time `t_total`. The evolution is split into small steps of duration `dt_cn`.
+If t_total is not an integer multiple of dt_cn, dt_effective = t_total/n_steps is used.
+"""
+function time_evol_state_cn(rho::AbstractMatrix{ComplexF64}, H::BoseHubbard{T}, t_total::Real, dt_cn::Real) where T<:Real
+    n_steps = max(1, Int(round(t_total / dt_cn)))
+    dt_effective = t_total / n_steps
+    U = crank_nicolson_propagator(H, dt_effective)
+    ρ = rho
+    for step in 1:n_steps
+        ρ = U * ρ * U'
+    end
+    return ρ
+end
+
+
 # Define the range of U/J values (10 values from 1.0 to 10.0)
-UJ_values = range(1.0, stop=10.0, length=10)
+UJ_values = [1.12345, 2.589865, 3.298687495, 4.8972836,5.9845862,6.3489579,7.982374,8.2739480,9.0482187,10.348739]
+
 
 # ---------------------------
 # Loop over U/J values and compute QSL quantities
 # ---------------------------
 qsl_data = []  # container to store data for each U/J
 
-for UJ in UJ_values
+@showprogress for UJ in UJ_values
     U_current = UJ * J
     println("Processing U/J = $UJ (U = $U_current)")
     
     # Recompute the thermal density matrix and initial state using updated U
     thermal_dm_current = thermal_state(beta, N, M, J, U_current)
+
     result_dm_current = sparse(kron(pure_system, thermal_dm_current))
     init_state_current = limit_dm(result_dm_current, N, M)
     

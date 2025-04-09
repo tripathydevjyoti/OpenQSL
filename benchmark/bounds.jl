@@ -23,10 +23,10 @@ using Trapz
 """
 Set Parameters
 """
-N = 4 # number of sites in the chain  (int values only)                                      
-M = 4  # number of bosons in the chain (int values only)
+N = 5 # number of sites in the chain  (int values only)                                      
+M = 5  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
-U = 20.0 # on-site potential (float values only) 
+U = 8.123 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
 beta = 1.0  # inverse temperature
 
@@ -65,7 +65,6 @@ Step 4: Limit the joint state to that of N bosons in total and apply the quench 
 #init_state = number_quench(N,M)*limit_dm(result_dm,N,M)*number_quench_dag
 
 init_state = limit_dm(result_dm, N, M)
-#init_state = init_state/tr(init_state)
 
 """
 Define the required Hamiltonians
@@ -132,6 +131,41 @@ bath_ham[2].basis.eig_vecs
 # Choose a small time step for the Crank–Nicolson scheme
 dt_cn = 0.001
 
+# Precompute the inner–integral functions (do this once for the maximum time)
+precomp_state = PrecompStateBound(t_stop, 100, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+precomp_spec  = PrecompSpectralBound(t_stop, 100, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+
+# Initialize variables for incremental integration.
+cumulative_state_bound = 0.0
+cumulative_spec_bound  = 0.0
+t_prev = 0.0  # starting at time zero
+
+@showprogress for (i, t) in enumerate(times)
+    # Evolve the state using Crank-Nicolson propagation:
+    rho_t = time_evol_state_cn(init_state, H, t, dt_cn)
+    # Transform into the interaction picture:
+    rho_int_t = interaction_picture(NBasis(N, M), U, rho_t)
+    # Partial trace over the bath to obtain the system density matrix:
+    rho_S = partial_trace_bath(rho_int_t, N, M)
+    push!(renyi_ent_list, renyi_entropy(rho_S))
+    
+    # Perform incremental integration between the previous time and current time t.
+    # Integrate the precomputed state-bound inner integral:
+    Δstate, _ = quadgk(precomp_state.interpolation, t_prev, t)
+    cumulative_state_bound += Δstate
+    
+    # Integrate the precomputed spectral-bound inner integral:
+    Δspec, _  = quadgk(precomp_spec.interpolation, t_prev, t)
+    cumulative_spec_bound  += Δspec
+    
+    # Store the cumulative (outer) integration results at time t.
+    push!(bound_list_born, cumulative_state_bound)
+    push!(spec_bound_list_born, cumulative_spec_bound)
+    
+    t_prev = t  # Update the previous time for the next increment.
+end
+
+"""
 @showprogress for (i, t) in enumerate(times)
     # Evolve the state using Crank–Nicolson:
     rho_t = time_evol_state_cn(init_state, H, t, dt_cn)
@@ -143,15 +177,15 @@ dt_cn = 0.001
     push!(renyi_ent_list, renyi_entropy(rho_S))
 
     # Compute the QSL bound using the pre-Born approximation version
-    qsl_born = QSL_OTOC_trapz(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
-    #qsl = QSL_OTOC_trapz(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
+    qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
+    #qsl = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
     push!(bound_list_born, real(qsl_born.state_bound))
     push!(spec_bound_list_born, real(qsl_born.spectral_bound))
 
     #push!(bound_list, real(qsl.state_bound))
     #push!(spec_bound_list, real(qsl.spectral_bound))
 end
-
+"""
 using  NPZ
 NPZ.save("renyi_ent_list.npy", renyi_ent_list)
 NPZ.save("bound_list_born.npy", bound_list_born)

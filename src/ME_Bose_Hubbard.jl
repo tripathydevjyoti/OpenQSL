@@ -33,8 +33,8 @@ module ME_Bose_Hubbard
     include("bath.jl")
     include("dissipator.jl")
     include("correlators.jl")
-    include("qsl.jl")
-    include("qsl_rect_int.jl")
+    #include("qsl.jl")
+    include("qsl_precomp.jl")
 
 
     
