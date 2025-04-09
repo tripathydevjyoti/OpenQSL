@@ -23,8 +23,8 @@ using Trapz
 """
 Set Parameters
 """
-N = 5 # number of sites in the chain  (int values only)                                      
-M = 5  # number of bosons in the chain (int values only)
+N = 4 # number of sites in the chain  (int values only)                                      
+M = 4  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
 U = 8.123 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
