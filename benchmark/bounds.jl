@@ -183,10 +183,10 @@ ylabel!("QSL")
 title!("Scrambling in BH (Crank-Nicolson)")
 savefig("qsl_bh_N$(N)_J$(J)_U$(U)_highres.pdf")
 
-#np = pyimport("numpy")
-#np.save("renyi_ent_list.npy", renyi_ent_list)
-#np.save("bound_list_born.npy", bound_list_born)
-#np.save("spec_bound_list_born.npy", spec_bound_list_born)
+np = pyimport("numpy")
+np.save("renyi_ent_list.npy", renyi_ent_list)
+np.save("bound_list_born.npy", bound_list_born)
+np.save("spec_bound_list_born.npy", spec_bound_list_born)
 
 
 
@@ -196,79 +196,3 @@ savefig("qsl_bh_N$(N)_J$(J)_U$(U)_highres.pdf")
 
 
 
-"""
-# ---------------------------
-# Example Usage:
-# ---------------------------
-
-# For example, suppose H is your Bose–Hubbard Hamiltonian (dense matrix).
-# Here we construct a dummy 10×10 Hermitian matrix for demonstration:
-dim = 500
-#H = rand(ComplexF64, dim, dim)
-#H = (H + H') / 2  # ensure H is Hermitian
-
-# Define a time step dt and number of steps (total time T = dt*n_steps)
-dt = 0.01
-n_steps = 100  # e.g., T = 1.0
-
-# Define an initial state.
-# For a pure state, one can use a normalized vector and form a density matrix.
-psi0 = rand(ComplexF64, H.basis.dim)
-psi0 /= norm(psi0)
-ρ0 = psi0 * psi0'   # density matrix for the pure state
-
-# Time evolve the state using the Crank–Nicolson propagator
-ρT = time_evol_state_cn(ρ0, H, dt, n_steps)
-println("State (density matrix) after evolution:")
-println(ρT)
-"""
-
-
-"""
-J_values = 0.0:0.5:12.0  
-length(J_values)         # example range of J
-integrated_diffs = Float64[]      # array to store integrated differences
-
-@showprogress for J_val in J_values
-    renyi_ent_list_J =[]
-    spec_bound_list_born_J=[]
-    @showprogress for (i,t) in enumerate(times)
-        rho_t = time_evol_state(init_state, H, t )
-        rho_int_t = interaction_picture(NBasis(N,M), U, rho_t)
-        
-        rho_S = partial_trace_bath(rho_int_t, N, M)
-        push!(renyi_ent_list_J, renyi_entropy(rho_S))
-    
-        #rho_B = partial_trace_system(rho_int_t, size(init_state,1),N,M)
-    
-       
-    
-        #qsl = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
-        qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
-    
-        #push!(bound_list, real(qsl.state_bound))
-        #push!(spec_bound_list, real(qsl.spectral_bound))
-        #push!(bound_list_born, real(qsl_born.state_bound))
-        push!(spec_bound_list_born_J, real(qsl_born.spectral_bound))
-        
-    
-    end   
-    otoc_vals = exp.(-renyi_ent_list_J)       # computed for this J_val
-    liouv_vals = exp.(-spec_bound_list_born_J) # computed for this J_val
-    diff_vals = otoc_vals .- liouv_vals
-    diff_filtered = map(x -> x > 0 ? 0.0 : x, diff_vals)
-    dt = times[2] - times[1]
-    integrated = sum(diff_filtered) * dt
-    push!(integrated_diffs, integrated)
-end
-
-# Finally, plot the integrated deviation versus J:
-using Plots
-plot(J_values, integrated_diffs,
-     marker = :circle,
-     xlabel = "J",
-     ylabel = "Integrated Negative Deviation",
-     label = "Integrated (OTOC - Liouv) where negative")
-
-
-"""
