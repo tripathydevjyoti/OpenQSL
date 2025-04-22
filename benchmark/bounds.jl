@@ -185,7 +185,7 @@ end
     #push!(bound_list, real(qsl.state_bound))
     #push!(spec_bound_list, real(qsl.spectral_bound))
 end
-"""
+
 using  NPZ
 NPZ.save("renyi_ent_list.npy", renyi_ent_list)
 NPZ.save("bound_list_born.npy", bound_list_born)
@@ -202,7 +202,7 @@ plot(
 )
 xlabel!("time")
 ylabel!("QSL")
-
+"""
 plot(
     times, 
     [exp.(-2 * real(bound_list_born)), 
@@ -213,13 +213,13 @@ plot(
 )
 xlabel!("time")
 ylabel!("QSL")
-title!("Scrambling in TFIM (Crank-Nicolson)")
+title!("Scrambling in BH (Crank-Nicolson)")
 savefig("qsl_bh_N$(N)_J$(J)_U$(U)_highres.pdf")
 
-np = pyimport("numpy")
-np.save("renyi_ent_list.npy", renyi_ent_list)
-np.save("bound_list_born.npy", bound_list_born)
-np.save("spec_bound_list_born.npy", spec_bound_list_born)
+#np = pyimport("numpy")
+#np.save("renyi_ent_list.npy", renyi_ent_list)
+#np.save("bound_list_born.npy", bound_list_born)
+#np.save("spec_bound_list_born.npy", spec_bound_list_born)
 
 """
 thermal_corr =[]
