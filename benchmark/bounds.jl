@@ -26,7 +26,7 @@ Set Parameters
 N = 4 # number of sites in the chain  (int values only)                                      
 M = 4  # number of bosons in the chain (int values only)
 J = 4.0 # hopping parameter (float values only)
-U = 8.123 # on-site potential (float values only) 
+U = 16.0 # on-site potential (float values only) 
 T = eltype(J)  # set data-type for the rest of the code
 beta = 1.0  # inverse temperature
 
@@ -141,6 +141,10 @@ cumulative_spec_bound  = 0.0
 t_prev = 0.0  # starting at time zero
 
 @showprogress for (i, t) in enumerate(times)
+
+
+    global cumulative_state_bound, cumulative_spec_bound, t_prev
+
     # Evolve the state using Crank-Nicolson propagation:
     rho_t = time_evol_state_cn(init_state, H, t, dt_cn)
     # Transform into the interaction picture:
@@ -165,44 +169,7 @@ t_prev = 0.0  # starting at time zero
     t_prev = t  # Update the previous time for the next increment.
 end
 
-"""
-@showprogress for (i, t) in enumerate(times)
-    # Evolve the state using Crank–Nicolson:
-    rho_t = time_evol_state_cn(init_state, H, t, dt_cn)
-    # Apply the interaction picture transformation
-    rho_int_t = interaction_picture(NBasis(N, M), U, rho_t)
-    
-    # Partial trace over the bath to get the system density matrix
-    rho_S = partial_trace_bath(rho_int_t, N, M)
-    push!(renyi_ent_list, renyi_entropy(rho_S))
 
-    # Compute the QSL bound using the pre-Born approximation version
-    qsl_born = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, true)
-    #qsl = QSL_OTOC(t, J, U, H, sys_ham, bath_ham, eigenvecs, init_state, false)
-    push!(bound_list_born, real(qsl_born.state_bound))
-    push!(spec_bound_list_born, real(qsl_born.spectral_bound))
-
-    #push!(bound_list, real(qsl.state_bound))
-    #push!(spec_bound_list, real(qsl.spectral_bound))
-end
-
-using  NPZ
-NPZ.save("renyi_ent_list.npy", renyi_ent_list)
-NPZ.save("bound_list_born.npy", bound_list_born)
-NPZ.save("spec_bound_list_born.npy", spec_bound_list_born)
-# Plot results
-plot(
-    times, 
-    [exp.(-2 * real(bound_list)), 
-     exp.(-2 * real(bound_list_born)), 
-     exp.(-spec_bound_list), 
-     exp.(-spec_bound_list_born), 
-     exp.(-renyi_ent_list)], 
-    label = ["State space" "State space + Born" "Liouv space" "Liouv space + Born" "OTOC"]
-)
-xlabel!("time")
-ylabel!("QSL")
-"""
 plot(
     times, 
     [exp.(-2 * real(bound_list_born)), 
@@ -221,25 +188,7 @@ savefig("qsl_bh_N$(N)_J$(J)_U$(U)_highres.pdf")
 #np.save("bound_list_born.npy", bound_list_born)
 #np.save("spec_bound_list_born.npy", spec_bound_list_born)
 
-"""
-thermal_corr =[]
-for (_,t) in enumerate(np.linspace(0,80.0,200))
-    bath_corr = two_time_corr(bath_ham,eigenvecs,[t,0.0], thermal_dm)
-    push!(thermal_corr,(bath_corr[1]))
-end    
 
-plot(np.linspace(0,80.0,200), real(thermal_corr))
-
-using CSV, DataFrames
-t_values = np.linspace(0,80.0,200)
-# Create a DataFrame
-df = DataFrame(Time=t_values, Thermal_Correlation=real(thermal_corr))
-
-# Save to CSV
-CSV.write("thermal_corr.csv", df)
-
-println("Saved thermal_corr data to thermal_corr.csv")
-"""
 
 
 
